@@ -1,6 +1,26 @@
+# ───────────────────────────────
+# 🌐 OMNEX SoS – MASTER .gitignore
+# Protects critical secrets, runtime files, and dev-specific noise
+# ───────────────────────────────
+
+# 📁 Operating System noise
+.DS_Store
+Thumbs.db
+
+# 🔐 Environment & Secrets
 .env
-node_modules/
-dist/
+.env.*
+.env.local
+
+# ⚙️ Supabase Local State
 .supabase/
 supabase/.temp/
-.env.local
+
+# 📦 Node Modules (future-proof, for Next.js etc.)
+node_modules/
+
+# 🐳 Docker Volumes (future-proof for container data)
+docker-data/
+
+# 🛠️ Build Output / Runtime Artifacts
+dist/
