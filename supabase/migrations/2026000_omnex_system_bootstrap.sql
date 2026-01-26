@@ -39,7 +39,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ==========================
 -- PHASE 1: SCHEMA
 -- ==========================
-CREATE SCHEMA IF NOT EXISTS omnex_system_bootstrap AUTHORIZATION postgres;
+CREATE SCHEMA IF NOT EXISTS omnex_system_bootstrap;
 
 -- ==========================
 -- PHASE 2: ENUMS
@@ -51,7 +51,7 @@ CREATE SCHEMA IF NOT EXISTS omnex_system_bootstrap AUTHORIZATION postgres;
 -- ==========================
 
 -- 3.1 Canonical System Registry
-CREATE TABLE omnex_system_bootstrap.system_registry (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_registry (
   version_id TEXT,
   category_prefix TEXT,
   category_code TEXT,
@@ -63,12 +63,12 @@ CREATE TABLE omnex_system_bootstrap.system_registry (
   schema_name TEXT,
   ownership_domain TEXT,
   criticality_level TEXT,
-  active BOOLEAN,
+  active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 3.2 User Registry (Bootstrap Awareness Only)
-CREATE TABLE omnex_system_bootstrap.user_registry (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.user_registry (
   user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_ref TEXT,
   user_type TEXT,
@@ -77,14 +77,14 @@ CREATE TABLE omnex_system_bootstrap.user_registry (
 );
 
 -- 3.3 System Schemas Table
-CREATE TABLE omnex_system_bootstrap.system_schemas (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_schemas (
   schema_name TEXT PRIMARY KEY,
   owner_role TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 3.4 Role-Based Search Paths
-CREATE TABLE omnex_system_bootstrap.role_search_path (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.role_search_path (
   role_name TEXT,
   search_path TEXT,
   immutable BOOLEAN DEFAULT true,
@@ -118,9 +118,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_system_registry
+ON omnex_system_bootstrap.system_registry;
+
 CREATE TRIGGER tg_protect_system_registry
 BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.system_registry
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_system_registry();
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_system_registry();
 
 -- ==========================
 -- PHASE 7: RLS
@@ -131,23 +135,44 @@ ALTER TABLE omnex_system_bootstrap.system_schemas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.role_search_path ENABLE ROW LEVEL SECURITY;
 
 -- Zero Trust RLS Policies (deny all)
-CREATE POLICY deny_all_system_registry ON omnex_system_bootstrap.system_registry USING (false);
-CREATE POLICY deny_all_user_registry ON omnex_system_bootstrap.user_registry USING (false);
-CREATE POLICY deny_all_system_schemas ON omnex_system_bootstrap.system_schemas USING (false);
-CREATE POLICY deny_all_role_search_path ON omnex_system_bootstrap.role_search_path USING (false);
+DROP POLICY IF EXISTS deny_all_system_registry ON omnex_system_bootstrap.system_registry;
+CREATE POLICY deny_all_system_registry
+ON omnex_system_bootstrap.system_registry
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_user_registry ON omnex_system_bootstrap.user_registry;
+CREATE POLICY deny_all_user_registry
+ON omnex_system_bootstrap.user_registry
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_system_schemas ON omnex_system_bootstrap.system_schemas;
+CREATE POLICY deny_all_system_schemas
+ON omnex_system_bootstrap.system_schemas
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_role_search_path ON omnex_system_bootstrap.role_search_path;
+CREATE POLICY deny_all_role_search_path
+ON omnex_system_bootstrap.role_search_path
+USING (false);
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_system_registry_code ON omnex_system_bootstrap.system_registry (system_code);
-CREATE INDEX idx_user_registry_type ON omnex_system_bootstrap.user_registry (user_type);
-CREATE INDEX idx_system_schemas_owner ON omnex_system_bootstrap.system_schemas (owner_role);
-CREATE INDEX idx_role_search_path_role ON omnex_system_bootstrap.role_search_path (role_name);
+CREATE INDEX IF NOT EXISTS idx_system_registry_code
+ON omnex_system_bootstrap.system_registry (system_code);
+
+CREATE INDEX IF NOT EXISTS idx_user_registry_type
+ON omnex_system_bootstrap.user_registry (user_type);
+
+CREATE INDEX IF NOT EXISTS idx_system_schemas_owner
+ON omnex_system_bootstrap.system_schemas (owner_role);
+
+CREATE INDEX IF NOT EXISTS idx_role_search_path_role
+ON omnex_system_bootstrap.role_search_path (role_name);
 
 -- ============================================================
 -- ✅ ENGINE 000 COMPLETE — IDENTITY CONTEXT SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_001
@@ -160,7 +185,7 @@ CREATE INDEX idx_role_search_path_role ON omnex_system_bootstrap.role_search_pat
 -- ==========================
 
 -- 3.1 SCHEMA OWNERSHIP HISTORY — LAWFUL OWNERSHIP ENFORCEMENT
-CREATE TABLE omnex_system_bootstrap.schema_ownership_history (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.schema_ownership_history (
   ownership_id UUID DEFAULT uuid_generate_v4(),
   schema_name TEXT NOT NULL,
   old_owner TEXT,
@@ -170,7 +195,7 @@ CREATE TABLE omnex_system_bootstrap.schema_ownership_history (
 );
 
 -- 3.2 DEFAULT PRIVILEGE POLICY — BASELINE PRIVILEGE MODEL
-CREATE TABLE omnex_system_bootstrap.default_privilege_policy (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.default_privilege_policy (
   policy_id UUID DEFAULT uuid_generate_v4(),
   schema_name TEXT NOT NULL,
   role_name TEXT NOT NULL,
@@ -180,7 +205,7 @@ CREATE TABLE omnex_system_bootstrap.default_privilege_policy (
 );
 
 -- 3.3 CORE ROLES — IMMUTABLE ROLE MODEL
-CREATE TABLE omnex_system_bootstrap.core_role (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.core_role (
   role_id UUID DEFAULT uuid_generate_v4(),
   role_name TEXT NOT NULL,
   role_scope TEXT NOT NULL,
@@ -190,7 +215,7 @@ CREATE TABLE omnex_system_bootstrap.core_role (
 );
 
 -- 3.4 RLS POLICY REGISTRY — GLOBAL TENANT ISOLATION LAW
-CREATE TABLE omnex_system_bootstrap.rls_policy_registry (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.rls_policy_registry (
   policy_id UUID DEFAULT uuid_generate_v4(),
   table_name TEXT NOT NULL,
   policy_name TEXT NOT NULL,
@@ -224,9 +249,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_core_role
+ON omnex_system_bootstrap.core_role;
+
 CREATE TRIGGER tg_protect_core_role
-BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.core_role
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_core_roles();
+BEFORE UPDATE OR DELETE
+ON omnex_system_bootstrap.core_role
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_core_roles();
 
 -- Default Privileges Immutability
 CREATE OR REPLACE FUNCTION omnex_system_bootstrap.protect_privileges()
@@ -239,9 +269,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_privilege_policy
+ON omnex_system_bootstrap.default_privilege_policy;
+
 CREATE TRIGGER tg_protect_privilege_policy
-BEFORE UPDATE ON omnex_system_bootstrap.default_privilege_policy
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_privileges();
+BEFORE UPDATE
+ON omnex_system_bootstrap.default_privilege_policy
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_privileges();
 
 -- ==========================
 -- PHASE 7: RLS
@@ -252,18 +287,44 @@ ALTER TABLE omnex_system_bootstrap.core_role ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.rls_policy_registry ENABLE ROW LEVEL SECURITY;
 
 -- Zero Trust Policies
-CREATE POLICY deny_all_schema_ownership ON omnex_system_bootstrap.schema_ownership_history USING (false);
-CREATE POLICY deny_all_privileges ON omnex_system_bootstrap.default_privilege_policy USING (false);
-CREATE POLICY deny_all_core_role ON omnex_system_bootstrap.core_role USING (false);
-CREATE POLICY deny_all_rls_policy ON omnex_system_bootstrap.rls_policy_registry USING (false);
+DROP POLICY IF EXISTS deny_all_schema_ownership
+ON omnex_system_bootstrap.schema_ownership_history;
+CREATE POLICY deny_all_schema_ownership
+ON omnex_system_bootstrap.schema_ownership_history
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_privileges
+ON omnex_system_bootstrap.default_privilege_policy;
+CREATE POLICY deny_all_privileges
+ON omnex_system_bootstrap.default_privilege_policy
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_core_role
+ON omnex_system_bootstrap.core_role;
+CREATE POLICY deny_all_core_role
+ON omnex_system_bootstrap.core_role
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_rls_policy
+ON omnex_system_bootstrap.rls_policy_registry;
+CREATE POLICY deny_all_rls_policy
+ON omnex_system_bootstrap.rls_policy_registry
+USING (false);
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_schema_ownership_schema ON omnex_system_bootstrap.schema_ownership_history (schema_name);
-CREATE INDEX idx_default_privilege_schema_role ON omnex_system_bootstrap.default_privilege_policy (schema_name, role_name);
-CREATE INDEX idx_core_role_name ON omnex_system_bootstrap.core_role (role_name);
-CREATE INDEX idx_rls_policy_table ON omnex_system_bootstrap.rls_policy_registry (table_name);
+CREATE INDEX IF NOT EXISTS idx_schema_ownership_schema
+ON omnex_system_bootstrap.schema_ownership_history (schema_name);
+
+CREATE INDEX IF NOT EXISTS idx_default_privilege_schema_role
+ON omnex_system_bootstrap.default_privilege_policy (schema_name, role_name);
+
+CREATE INDEX IF NOT EXISTS idx_core_role_name
+ON omnex_system_bootstrap.core_role (role_name);
+
+CREATE INDEX IF NOT EXISTS idx_rls_policy_table
+ON omnex_system_bootstrap.rls_policy_registry (table_name);
 
 -- ============================================================
 -- ✅ ENGINE 001 COMPLETE — GOVERNANCE SECURITY SEALED
@@ -281,7 +342,7 @@ CREATE INDEX idx_rls_policy_table ON omnex_system_bootstrap.rls_policy_registry 
 -- ==========================
 
 -- 3.1 MASTER ROUTER — Central System Nervous System
-CREATE TABLE omnex_system_bootstrap.master_router (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.master_router (
   router_id UUID DEFAULT uuid_generate_v4(),
   router_code TEXT NOT NULL,
   router_type TEXT NOT NULL,
@@ -291,7 +352,7 @@ CREATE TABLE omnex_system_bootstrap.master_router (
 );
 
 -- 3.2 COORDINATION SYSTEMS — Platform Coordination Systems Registry
-CREATE TABLE omnex_system_bootstrap.coordination_system (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.coordination_system (
   coordination_id UUID DEFAULT uuid_generate_v4(),
   system_code TEXT NOT NULL,
   system_type TEXT NOT NULL,
@@ -300,7 +361,7 @@ CREATE TABLE omnex_system_bootstrap.coordination_system (
 );
 
 -- 3.3 SYSTEM EVENT — Append-Only Event Stream
-CREATE TABLE omnex_system_bootstrap.system_event (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_event (
   event_id UUID DEFAULT uuid_generate_v4(),
   system_id UUID NOT NULL,
   event_type TEXT NOT NULL,
@@ -312,6 +373,9 @@ CREATE TABLE omnex_system_bootstrap.system_event (
 -- ==========================
 -- PHASE 4: CONSTRAINTS
 -- ==========================
+
+ALTER TABLE omnex_system_bootstrap.system_event
+DROP CONSTRAINT IF EXISTS fk_system_event_system;
 
 ALTER TABLE omnex_system_bootstrap.system_event
   ADD CONSTRAINT fk_system_event_system
@@ -338,9 +402,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_master_router
+ON omnex_system_bootstrap.master_router;
+
 CREATE TRIGGER tg_protect_master_router
-BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.master_router
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_master_router();
+BEFORE UPDATE OR DELETE
+ON omnex_system_bootstrap.master_router
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_master_router();
 
 -- Prevent mutation of coordination systems
 CREATE OR REPLACE FUNCTION omnex_system_bootstrap.protect_coordination_system()
@@ -353,9 +422,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_coordination_system
+ON omnex_system_bootstrap.coordination_system;
+
 CREATE TRIGGER tg_protect_coordination_system
-BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.coordination_system
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_coordination_system();
+BEFORE UPDATE OR DELETE
+ON omnex_system_bootstrap.coordination_system
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_coordination_system();
 
 -- Prevent updates to event stream — events are append-only
 CREATE OR REPLACE FUNCTION omnex_system_bootstrap.protect_system_event()
@@ -368,9 +442,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_protect_system_event
+ON omnex_system_bootstrap.system_event;
+
 CREATE TRIGGER tg_protect_system_event
-BEFORE UPDATE ON omnex_system_bootstrap.system_event
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_system_event();
+BEFORE UPDATE
+ON omnex_system_bootstrap.system_event
+FOR EACH ROW
+EXECUTE FUNCTION omnex_system_bootstrap.protect_system_event();
 
 -- ==========================
 -- PHASE 7: RLS
@@ -380,22 +459,42 @@ ALTER TABLE omnex_system_bootstrap.coordination_system ENABLE ROW LEVEL SECURITY
 ALTER TABLE omnex_system_bootstrap.system_event ENABLE ROW LEVEL SECURITY;
 
 -- Zero-trust base policies
-CREATE POLICY deny_all_master_router ON omnex_system_bootstrap.master_router USING (false);
-CREATE POLICY deny_all_coordination_system ON omnex_system_bootstrap.coordination_system USING (false);
-CREATE POLICY deny_all_system_event ON omnex_system_bootstrap.system_event USING (false);
+DROP POLICY IF EXISTS deny_all_master_router
+ON omnex_system_bootstrap.master_router;
+CREATE POLICY deny_all_master_router
+ON omnex_system_bootstrap.master_router
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_coordination_system
+ON omnex_system_bootstrap.coordination_system;
+CREATE POLICY deny_all_coordination_system
+ON omnex_system_bootstrap.coordination_system
+USING (false);
+
+DROP POLICY IF EXISTS deny_all_system_event
+ON omnex_system_bootstrap.system_event;
+CREATE POLICY deny_all_system_event
+ON omnex_system_bootstrap.system_event
+USING (false);
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_master_router_code ON omnex_system_bootstrap.master_router (router_code);
-CREATE INDEX idx_coordination_system_code ON omnex_system_bootstrap.coordination_system (system_code);
-CREATE INDEX idx_system_event_type ON omnex_system_bootstrap.system_event (event_type);
-CREATE INDEX idx_system_event_system ON omnex_system_bootstrap.system_event (system_id);
+CREATE INDEX IF NOT EXISTS idx_master_router_code
+ON omnex_system_bootstrap.master_router (router_code);
+
+CREATE INDEX IF NOT EXISTS idx_coordination_system_code
+ON omnex_system_bootstrap.coordination_system (system_code);
+
+CREATE INDEX IF NOT EXISTS idx_system_event_type
+ON omnex_system_bootstrap.system_event (event_type);
+
+CREATE INDEX IF NOT EXISTS idx_system_event_system
+ON omnex_system_bootstrap.system_event (system_id);
 
 -- ============================================================
 -- ✅ ENGINE 002 COMPLETE — ORCHESTRATION CORE SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_003
@@ -408,7 +507,7 @@ CREATE INDEX idx_system_event_system ON omnex_system_bootstrap.system_event (sys
 -- ==========================
 
 -- 3.1 COORDINATION TABLE REGISTRY — GOVERNANCE TRANSPARENCY
-CREATE TABLE omnex_system_bootstrap.coordination_table_registry (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.coordination_table_registry (
   entry_id UUID DEFAULT uuid_generate_v4(),
   table_name TEXT NOT NULL,
   system_id UUID NOT NULL,
@@ -417,7 +516,7 @@ CREATE TABLE omnex_system_bootstrap.coordination_table_registry (
 );
 
 -- 3.2 SYSTEM SEED LOG — CONTROLLED SYSTEM AWAKENING
-CREATE TABLE omnex_system_bootstrap.system_seed_log (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_seed_log (
   seed_id UUID DEFAULT uuid_generate_v4(),
   system_code TEXT NOT NULL,
   seed_version TEXT NOT NULL,
@@ -429,10 +528,20 @@ CREATE TABLE omnex_system_bootstrap.system_seed_log (
 -- PHASE 4: CONSTRAINTS
 -- ==========================
 
-ALTER TABLE omnex_system_bootstrap.coordination_table_registry
-  ADD CONSTRAINT fk_coordination_table_system
-  FOREIGN KEY (system_id)
-  REFERENCES omnex_system_bootstrap.coordination_system (coordination_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'fk_coordination_table_system'
+  ) THEN
+    ALTER TABLE omnex_system_bootstrap.coordination_table_registry
+      ADD CONSTRAINT fk_coordination_table_system
+      FOREIGN KEY (system_id)
+      REFERENCES omnex_system_bootstrap.coordination_system (coordination_id);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 5: RELATIONSHIPS
@@ -454,9 +563,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tg_protect_coordination_table_registry
-BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.coordination_table_registry
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_coordination_table_registry();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'tg_protect_coordination_table_registry'
+  ) THEN
+    CREATE TRIGGER tg_protect_coordination_table_registry
+    BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.coordination_table_registry
+    FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_coordination_table_registry();
+  END IF;
+END
+$$;
 
 -- Prevent mutation of system_seed_log
 CREATE OR REPLACE FUNCTION omnex_system_bootstrap.protect_system_seed_log()
@@ -469,38 +586,64 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tg_protect_system_seed_log
-BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.system_seed_log
-FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_system_seed_log();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'tg_protect_system_seed_log'
+  ) THEN
+    CREATE TRIGGER tg_protect_system_seed_log
+    BEFORE UPDATE OR DELETE ON omnex_system_bootstrap.system_seed_log
+    FOR EACH ROW EXECUTE FUNCTION omnex_system_bootstrap.protect_system_seed_log();
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.coordination_table_registry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.system_seed_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY deny_all_coordination_table_registry
-  ON omnex_system_bootstrap.coordination_table_registry
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_coordination_table_registry'
+  ) THEN
+    CREATE POLICY deny_all_coordination_table_registry
+      ON omnex_system_bootstrap.coordination_table_registry
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_system_seed_log
-  ON omnex_system_bootstrap.system_seed_log
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_system_seed_log'
+  ) THEN
+    CREATE POLICY deny_all_system_seed_log
+      ON omnex_system_bootstrap.system_seed_log
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_coordination_table_registry_table
+
+CREATE INDEX IF NOT EXISTS idx_coordination_table_registry_table
   ON omnex_system_bootstrap.coordination_table_registry (table_name);
 
-CREATE INDEX idx_coordination_system_seed_log_code
+CREATE INDEX IF NOT EXISTS idx_coordination_system_seed_log_code
   ON omnex_system_bootstrap.system_seed_log (system_code);
 
 -- ============================================================
 -- ✅ ENGINE 003 COMPLETE — COORDINATION REGISTRY SEALED
 -- ============================================================
-
-
 -- ============================================================
 -- ENGINE NO: engine_004
 -- ENGINE NAME: immutability
@@ -512,7 +655,7 @@ CREATE INDEX idx_coordination_system_seed_log_code
 -- ==========================
 
 -- 3.1 ARCHIVE EVENT LOG — PERMANENT LEDGER OF DESTRUCTIVE INTENT
-CREATE TABLE omnex_system_bootstrap.archive_event_log (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.archive_event_log (
   archive_id UUID DEFAULT uuid_generate_v4(),
   table_name TEXT NOT NULL,
   record_id TEXT NOT NULL,
@@ -538,8 +681,9 @@ CREATE TABLE omnex_system_bootstrap.archive_event_log (
 CREATE OR REPLACE FUNCTION omnex_system_bootstrap.archive_record()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO omnex_system_bootstrap.archive_event_log(table_name, record_id)
+  INSERT INTO omnex_system_bootstrap.archive_event_log (table_name, record_id)
   VALUES (TG_TABLE_NAME, OLD.*::text);
+
   RAISE EXCEPTION 'Deletion is prohibited. Record archived instead.';
 END;
 $$ LANGUAGE plpgsql;
@@ -557,25 +701,35 @@ $$ LANGUAGE plpgsql;
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.archive_event_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY deny_all_archive_event_log
-  ON omnex_system_bootstrap.archive_event_log
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_archive_event_log'
+  ) THEN
+    CREATE POLICY deny_all_archive_event_log
+      ON omnex_system_bootstrap.archive_event_log
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_archive_event_log_table
+
+CREATE INDEX IF NOT EXISTS idx_archive_event_log_table
   ON omnex_system_bootstrap.archive_event_log (table_name);
 
-CREATE INDEX idx_archive_event_log_record
+CREATE INDEX IF NOT EXISTS idx_archive_event_log_record
   ON omnex_system_bootstrap.archive_event_log (record_id);
 
 -- ============================================================
 -- ✅ ENGINE 004 COMPLETE — IMMUTABILITY SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_005
@@ -588,7 +742,7 @@ CREATE INDEX idx_archive_event_log_record
 -- ==========================
 
 -- 3.1 HELPER FUNCTION REGISTRY — NON-MUTATING UTILITIES
-CREATE TABLE omnex_system_bootstrap.helper_function_registry (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.helper_function_registry (
   function_id UUID DEFAULT uuid_generate_v4(),
   function_name TEXT NOT NULL,
   return_type TEXT NOT NULL,
@@ -597,7 +751,7 @@ CREATE TABLE omnex_system_bootstrap.helper_function_registry (
 );
 
 -- 3.2 SYSTEM SIGNAL — CANONICAL SIGNAL OUTPUT
-CREATE TABLE omnex_system_bootstrap.system_signal (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_signal (
   signal_id UUID DEFAULT uuid_generate_v4(),
   source_system TEXT NOT NULL,
   signal_type TEXT NOT NULL,
@@ -606,7 +760,7 @@ CREATE TABLE omnex_system_bootstrap.system_signal (
 );
 
 -- 3.3 SYSTEM AUTO TRIGGER — LAWFUL AUTOMATION BOUNDARY
-CREATE TABLE omnex_system_bootstrap.system_auto_trigger (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_auto_trigger (
   trigger_id UUID DEFAULT uuid_generate_v4(),
   trigger_code TEXT NOT NULL,
   conditions JSONB NOT NULL,
@@ -670,39 +824,66 @@ $$ LANGUAGE plpgsql;
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.helper_function_registry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.system_signal ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.system_auto_trigger ENABLE ROW LEVEL SECURITY;
 
--- Zero trust policies
-CREATE POLICY deny_all_helper_function_registry
-  ON omnex_system_bootstrap.helper_function_registry
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_helper_function_registry'
+  ) THEN
+    CREATE POLICY deny_all_helper_function_registry
+      ON omnex_system_bootstrap.helper_function_registry
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_system_signal
-  ON omnex_system_bootstrap.system_signal
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_system_signal'
+  ) THEN
+    CREATE POLICY deny_all_system_signal
+      ON omnex_system_bootstrap.system_signal
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_system_auto_trigger
-  ON omnex_system_bootstrap.system_auto_trigger
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_system_auto_trigger'
+  ) THEN
+    CREATE POLICY deny_all_system_auto_trigger
+      ON omnex_system_bootstrap.system_auto_trigger
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_helper_function_by_name
+
+CREATE INDEX IF NOT EXISTS idx_helper_function_by_name
   ON omnex_system_bootstrap.helper_function_registry (function_name);
 
-CREATE INDEX idx_signal_by_source
+CREATE INDEX IF NOT EXISTS idx_signal_by_source
   ON omnex_system_bootstrap.system_signal (source_system);
 
-CREATE INDEX idx_trigger_by_code
+CREATE INDEX IF NOT EXISTS idx_trigger_by_code
   ON omnex_system_bootstrap.system_auto_trigger (trigger_code);
 
 -- ============================================================
 -- ✅ ENGINE 005 COMPLETE — UTILITIES & AUTOMATION SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_006
@@ -715,7 +896,7 @@ CREATE INDEX idx_trigger_by_code
 -- ==========================
 
 -- 3.1 SYSTEM HEARTBEAT — LIVENESS SIGNAL
-CREATE TABLE omnex_system_bootstrap.system_heartbeat (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.system_heartbeat (
   heartbeat_id UUID DEFAULT uuid_generate_v4(),
   system_id UUID NOT NULL,
   status_json JSONB NOT NULL,
@@ -724,7 +905,7 @@ CREATE TABLE omnex_system_bootstrap.system_heartbeat (
 );
 
 -- 3.2 CONNECTOR TEMPLATE — INTEGRATION CONTRACT SCHEMA
-CREATE TABLE omnex_system_bootstrap.connector_template (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.connector_template (
   template_id UUID DEFAULT uuid_generate_v4(),
   connector_code TEXT NOT NULL,
   schema_contract JSONB NOT NULL,
@@ -733,7 +914,7 @@ CREATE TABLE omnex_system_bootstrap.connector_template (
 );
 
 -- 3.3 CI CONNECTOR EVENT — STATELESS BRIDGE FOR CI SIGNALS
-CREATE TABLE omnex_system_bootstrap.ci_connector_event (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.ci_connector_event (
   event_id UUID DEFAULT uuid_generate_v4(),
   connector_code TEXT NOT NULL,
   payload JSONB NOT NULL,
@@ -749,11 +930,21 @@ CREATE TABLE omnex_system_bootstrap.ci_connector_event (
 -- ==========================
 -- PHASE 5: RELATIONSHIPS
 -- ==========================
--- Optional FK to coordination_system (engine_002) for system_id
-ALTER TABLE omnex_system_bootstrap.system_heartbeat
-  ADD CONSTRAINT fk_heartbeat_system
-  FOREIGN KEY (system_id)
-  REFERENCES omnex_system_bootstrap.coordination_system (coordination_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'fk_heartbeat_system'
+  ) THEN
+    ALTER TABLE omnex_system_bootstrap.system_heartbeat
+      ADD CONSTRAINT fk_heartbeat_system
+      FOREIGN KEY (system_id)
+      REFERENCES omnex_system_bootstrap.coordination_system (coordination_id);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 6: LOGIC / TRIGGERS
@@ -763,39 +954,66 @@ ALTER TABLE omnex_system_bootstrap.system_heartbeat
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.system_heartbeat ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.connector_template ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.ci_connector_event ENABLE ROW LEVEL SECURITY;
 
--- Zero trust policies
-CREATE POLICY deny_all_system_heartbeat
-  ON omnex_system_bootstrap.system_heartbeat
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_system_heartbeat'
+  ) THEN
+    CREATE POLICY deny_all_system_heartbeat
+      ON omnex_system_bootstrap.system_heartbeat
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_connector_template
-  ON omnex_system_bootstrap.connector_template
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_connector_template'
+  ) THEN
+    CREATE POLICY deny_all_connector_template
+      ON omnex_system_bootstrap.connector_template
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_ci_connector_event
-  ON omnex_system_bootstrap.ci_connector_event
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_ci_connector_event'
+  ) THEN
+    CREATE POLICY deny_all_ci_connector_event
+      ON omnex_system_bootstrap.ci_connector_event
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_heartbeat_by_system
+
+CREATE INDEX IF NOT EXISTS idx_heartbeat_by_system
   ON omnex_system_bootstrap.system_heartbeat (system_id);
 
-CREATE INDEX idx_connector_template_code
+CREATE INDEX IF NOT EXISTS idx_connector_template_code
   ON omnex_system_bootstrap.connector_template (connector_code);
 
-CREATE INDEX idx_ci_event_by_code
+CREATE INDEX IF NOT EXISTS idx_ci_event_by_code
   ON omnex_system_bootstrap.ci_connector_event (connector_code);
 
 -- ============================================================
 -- ✅ ENGINE 006 COMPLETE — LIVENESS & INTEGRATION SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_007
@@ -808,7 +1026,7 @@ CREATE INDEX idx_ci_event_by_code
 -- ==========================
 
 -- 3.1 INTELLIGENCE SIGNAL — INFERENCE & PRESCRIPTION SIGNALS
-CREATE TABLE omnex_system_bootstrap.intelligence_signal (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.intelligence_signal (
   signal_id UUID DEFAULT uuid_generate_v4(),
   subject_id UUID NOT NULL,
   signal_type TEXT NOT NULL,
@@ -818,7 +1036,7 @@ CREATE TABLE omnex_system_bootstrap.intelligence_signal (
 );
 
 -- 3.2 STATELESS ACTION LOG — SAFE EXECUTION WRAPPERS
-CREATE TABLE omnex_system_bootstrap.stateless_action_log (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.stateless_action_log (
   action_id UUID DEFAULT uuid_generate_v4(),
   action_code TEXT NOT NULL,
   invoked_by UUID NOT NULL,
@@ -872,34 +1090,52 @@ $$ LANGUAGE plpgsql;
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.intelligence_signal ENABLE ROW LEVEL SECURITY;
 ALTER TABLE omnex_system_bootstrap.stateless_action_log ENABLE ROW LEVEL SECURITY;
 
--- Zero trust policies
-CREATE POLICY deny_all_intelligence_signal
-  ON omnex_system_bootstrap.intelligence_signal
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_intelligence_signal'
+  ) THEN
+    CREATE POLICY deny_all_intelligence_signal
+      ON omnex_system_bootstrap.intelligence_signal
+      USING (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY deny_all_stateless_action_log
-  ON omnex_system_bootstrap.stateless_action_log
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_stateless_action_log'
+  ) THEN
+    CREATE POLICY deny_all_stateless_action_log
+      ON omnex_system_bootstrap.stateless_action_log
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_signal_by_subject
+
+CREATE INDEX IF NOT EXISTS idx_signal_by_subject
   ON omnex_system_bootstrap.intelligence_signal (subject_id);
 
-CREATE INDEX idx_signal_by_type
+CREATE INDEX IF NOT EXISTS idx_signal_by_type
   ON omnex_system_bootstrap.intelligence_signal (signal_type);
 
-CREATE INDEX idx_action_log_by_actor
+CREATE INDEX IF NOT EXISTS idx_action_log_by_actor
   ON omnex_system_bootstrap.stateless_action_log (invoked_by);
 
 -- ============================================================
 -- ✅ ENGINE 007 COMPLETE — INTELLIGENCE EXECUTION SEALED
 -- ============================================================
-
 
 -- ============================================================
 -- ENGINE NO: engine_008
@@ -912,7 +1148,7 @@ CREATE INDEX idx_action_log_by_actor
 -- ==========================
 
 -- 3.1 UNIVERSAL FRAMEWORK MANIFEST — FINAL CONSTITUTIONAL SEAL
-CREATE TABLE omnex_system_bootstrap.universal_framework_manifest (
+CREATE TABLE IF NOT EXISTS omnex_system_bootstrap.universal_framework_manifest (
   manifest_id UUID DEFAULT uuid_generate_v4(),
   version TEXT NOT NULL,
   hash TEXT NOT NULL,
@@ -951,19 +1187,30 @@ $$ LANGUAGE plpgsql;
 -- ==========================
 -- PHASE 7: RLS
 -- ==========================
+
 ALTER TABLE omnex_system_bootstrap.universal_framework_manifest ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY deny_all_manifest
-  ON omnex_system_bootstrap.universal_framework_manifest
-  USING (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'deny_all_manifest'
+  ) THEN
+    CREATE POLICY deny_all_manifest
+      ON omnex_system_bootstrap.universal_framework_manifest
+      USING (false);
+  END IF;
+END
+$$;
 
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
-CREATE INDEX idx_manifest_by_version
+
+CREATE INDEX IF NOT EXISTS idx_manifest_by_version
   ON omnex_system_bootstrap.universal_framework_manifest (version);
 
-CREATE INDEX idx_manifest_by_hash
+CREATE INDEX IF NOT EXISTS idx_manifest_by_hash
   ON omnex_system_bootstrap.universal_framework_manifest (hash);
 
 -- ============================================================
