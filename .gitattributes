@@ -1,2 +1,81 @@
-# Auto detect text files and perform LF normalization
+# OMNEX repository Git attribute policy
+# Scope: backend, frontend, infrastructure, governance artifacts
+
+# Default text normalization
 * text=auto
+
+# SQL and database artifacts (LF required for execution and diff stability)
+*.sql    text eol=lf diff=sql
+*.pgsql  text eol=lf diff=sql
+*.psql   text eol=lf diff=sql
+
+# Database dumps and backups are binary
+*.dump   binary
+*.bak    binary
+
+# Configuration files
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.json   text eol=lf diff=json
+
+# Environment files must never be merged
+*.env    text merge=ours
+*.env.*  text merge=ours
+
+# Governance and documentation artifacts
+*.md     text eol=lf
+*.rst    text eol=lf
+*.adoc   text eol=lf
+
+# Legal and archival documents are immutable binaries
+*.pdf    binary
+*.docx  binary
+*.xlsx  binary
+
+# Frontend source files
+*.css    text eol=lf
+*.scss  text eol=lf
+*.js     text eol=lf
+*.ts     text eol=lf
+*.tsx    text eol=lf
+
+# Dependency lock files must not be auto-merged
+package-lock.json  merge=ours
+yarn.lock          merge=ours
+pnpm-lock.yaml     merge=ours
+
+# Media assets
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.svg   text
+*.ico   binary
+*.webp  binary
+
+# Automation scripts
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.ps1   text eol=crlf
+
+# CI/CD definitions
+.github/workflows/*.yml  text eol=lf
+.gitlab-ci.yml           text eol=lf
+Dockerfile               text eol=lf
+*.dockerfile             text eol=lf
+
+# Infrastructure as Code
+*.tf     text eol=lf
+*.tfvars text eol=lf
+*.hcl    text eol=lf
+
+# Cryptographic material is binary and non-diffable
+*.pem   binary
+*.key   binary
+*.crt   binary
+*.pfx   binary
+
+# Export control
+/docs/internal/**     export-ignore
+/audit/internal/**    export-ignore
+/.github/internal/**  export-ignore

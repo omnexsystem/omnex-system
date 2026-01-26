@@ -1,0 +1,62 @@
+# EditorConfig is authoritative for this repository
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# SQL migrations and database artifacts
+[*.sql]
+indent_size = 2
+max_line_length = 120
+
+# Infrastructure as Code
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.json]
+indent_size = 2
+
+[*.tf]
+indent_size = 2
+
+[*.tfvars]
+indent_size = 2
+
+[*.hcl]
+indent_size = 2
+
+# Shell scripts (must execute on Linux)
+[*.sh]
+indent_size = 2
+
+# PowerShell scripts (Windows operators)
+[*.ps1]
+end_of_line = crlf
+indent_size = 2
+
+# Frontend source files
+[*.{js,ts,tsx}]
+indent_size = 2
+
+[*.{css,scss}]
+indent_size = 2
+
+# Markdown and documentation
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Lock files (machine-generated)
+[{package-lock.json,yarn.lock,pnpm-lock.yaml}]
+indent_size = off
+trim_trailing_whitespace = false
+
+# Binary-like text formats
+[*.svg]
+indent_size = off
+trim_trailing_whitespace = false
