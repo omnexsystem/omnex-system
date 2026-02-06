@@ -1,0 +1,68 @@
+# 🛡️ OMNEX SYSTEM ROW-LEVEL SECURITY (RLS) POLICY MODEL
+## Tenant Isolation Law
+
+Status: ACTIVE  
+Authority: Omnex System Core  
+
+---
+
+## 1. PURPOSE
+
+This document defines the **mandatory RLS model** for all Omnex data.
+
+RLS is not optional.   
+RLS is not configurable per engine.  
+RLS is **constitutional**.
+
+---
+
+## 2. ISOLATION AXIOM
+
+Every row of data MUST be attributable to:
+- A tenant
+- A system context
+
+No shared visibility is permitted by default.
+
+---
+
+## 3. RLS DESIGN PRINCIPLES
+
+- Default deny
+- Explicit allow
+- Context-injected evaluation
+- No session variables
+
+---
+
+## 4. CONTEXT SOURCES
+
+RLS predicates may only use:
+- Tenant runtime identity
+- System registry metadata
+- Role-derived access scope
+
+Direct user-based filtering is forbidden.
+
+---
+
+## 5. ENGINE OBLIGATIONS
+
+- Engines must declare RLS intent in migration phase 7.
+- No engine may bypass RLS via SECURITY DEFINER logic.
+- All joins must preserve tenant boundaries.
+
+---
+
+## 6. ENFORCEMENT
+
+- RLS policies are validated at migration time.
+- Runtime bypass attempts are audited.
+- Violations trigger governance alerts.
+
+---
+
+## 7. FINAL LAW
+
+If a row is not tenant-isolated,  
+**it must not exist**.

@@ -1,0 +1,445 @@
+omnex_system_catalogue:
+  version: "Genesis 2026"
+  status: "FINAL"
+  authority: "Omnex System Core Registry (Engine 000)"
+  systems:
+    - no: 001
+      system_no: system_000
+      system_id: 2026000
+      system_code: OS_BOOT
+      system_name: Omnex_System_Bootstrap
+      category_code: OS_BOOT
+      schema: omnex_system_bootstrap
+      description: Initializes schemas, extensions, and 8-phase constitutional loop
+      status: Active
+
+    - no: 002
+      system_no: system_001
+      system_id: 2026001
+      system_code: OS_CORE
+      system_name: Omnex_System_Core
+      category_code: OS_CF
+      schema: omnex_system_core
+      description: Governs registry, system identity, install legality and governance logic
+      status: Active
+
+    - no: 003
+      system_no: system_002
+      system_id: 2026002
+      system_code: OS_ID
+      system_name: Omnex_System_Identity
+      category_code: OS_CF
+      schema: omnex_system_identity
+      description: Generates unique ID, code, schema and category references for all systems
+      status: Active
+
+    - no: 004
+      system_no: system_003
+      system_id: 2026003
+      system_code: OS_GOV
+      system_name: Omnex_System_Governance
+      category_code: OS_CF
+      schema: omnex_system_governance
+      description: Enforces RLS policies, role models, migration law, and system roles
+      status: Active
+
+    - no: 005
+      system_no: system_004
+      system_id: 2026004
+      system_code: OS_AUD
+      system_name: Omnex_System_Audit
+      category_code: OS_CF
+      schema: omnex_system_audit
+      description: Audits all state transitions, logs evidence trails, applies hash sealing
+      status: Active
+
+    - no: 006
+      system_no: system_005
+      system_id: 2026005
+      system_code: OS_FND
+      system_name: Omnex_Systems_Foundation
+      category_code: OS_CF
+      schema: omnex_system_foundation
+      description: Core contracts, tables and category rules shared across systems
+      status: Active
+
+    - no: 007
+      system_no: system_006
+      system_id: 2026006
+      system_code: OS_TR
+      system_name: Omnex_System_Treasury
+      category_code: OS_AUTH
+      schema: omnex_system_treasury
+      description: National and institutional budgeting system, controlling fiscal flows
+      status: Active
+
+    - no: 008
+      system_no: system_007
+      system_id: 2026007
+      system_code: OS_TX
+      system_name: Omnex_System_Tax
+      category_code: OS_AUTH
+      schema: omnex_system_tax
+      description: Administers national taxation frameworks, rules and taxpayer records
+      status: Active
+
+    - no: 009
+      system_no: system_008
+      system_id: 2026008
+      system_code: OS_TD
+      system_name: Omnex_System_Trade
+      category_code: OS_AUTH
+      schema: omnex_system_trade
+      description: Regulates cross-border and internal trade, licensing and export policy
+      status: Active
+
+    - no: 010
+      system_no: system_009
+      system_id: 2026009
+      system_code: OS_LB
+      system_name: Omnex_System_Labour
+      category_code: OS_AUTH
+      schema: omnex_system_labour
+      description: Labour market regulation, union governance and worker rights
+      status: Active
+
+    - no: 011
+      system_no: system_010
+      system_id: 2026010
+      system_code: OS_AGRI
+      system_name: Omnex_System_Agriculture
+      category_code: OS_AUTH
+      schema: omnex_system_agriculture
+      description: Agricultural laws, sector data, and farmer economic policies
+      status: Active
+
+    - no: 012
+      system_no: system_011
+      system_id: 2026011
+      system_code: OS_EN
+      system_name: Omnex_System_Energy
+      category_code: OS_AUTH
+      schema: omnex_system_energy
+      description: Energy infrastructure, production, and regulatory oversight
+      status: Active
+
+    - no: 013
+      system_no: system_012
+      system_id: 2026012
+      system_code: OS_INFRA
+      system_name: Omnex_System_Infrastructure
+      category_code: OS_AUTH
+      schema: omnex_system_infrastructure
+      description: Infrastructure development, public works, and project registers
+      status: Active
+
+    - no: 014
+      system_no: system_013
+      system_id: 2026013
+      system_code: OS_H
+      system_name: Omnex_System_Health
+      category_code: OS_AUTH
+      schema: omnex_system_health
+      description: Healthcare system covering hospitals, drugs, and health policy
+      status: Active
+
+    - no: 015
+      system_no: system_014
+      system_id: 2026014
+      system_code: OS_ED
+      system_name: Omnex_System_Education
+      category_code: OS_AUTH
+      schema: omnex_system_education
+      description: National education system, institutions, curricula and accreditation
+      status: Active
+
+    - no: 016
+      system_no: system_015
+      system_id: 2026015
+      system_code: OS_FINOPS
+      system_name: Omnex_System_FinanceOps
+      category_code: OS_OPS
+      schema: omnex_system_financeops
+      description: Day-to-day budget disbursement and financial transaction flows
+      status: Active
+
+    - no: 017
+      system_no: system_016
+      system_id: 2026016
+      system_code: OS_TXOPS
+      system_name: Omnex_System_TaxOps
+      category_code: OS_OPS
+      schema: omnex_system_taxops
+      description: Tax revenue collection execution, filing and field enforcement
+      status: Active
+
+    - no: 018
+      system_no: system_017
+      system_id: 2026017
+      system_code: OS_TDOPS
+      system_name: Omnex_System_TradeOps
+      category_code: OS_OPS
+      schema: omnex_system_tradeops
+      description: Licensed trade facilitation, compliance and border execution
+      status: Active
+
+    - no: 019
+      system_no: system_018
+      system_id: 2026018
+      system_code: OS_HC
+      system_name: Omnex_System_HumanCapital
+      category_code: OS_OPS
+      schema: omnex_system_humancapital
+      description: Workforce operations, HR workflows, contracts and leave registers
+      status: Active
+
+    - no: 020
+      system_no: system_019
+      system_id: 2026019
+      system_code: OS_AGRIOPS
+      system_name: Omnex_System_AgriOps
+      category_code: OS_OPS
+      schema: omnex_system_agriops
+      description: Execution of agricultural programs, seed distributions, subsidy ops
+      status: Active
+
+    - no: 021
+      system_no: system_020
+      system_id: 2026020
+      system_code: OS_UGOPS
+      system_name: Omnex_System_UtilityGrid
+      category_code: OS_OPS
+      schema: omnex_system_utilitygrid
+      description: Operates national utility grids including electricity, water, and distribution control
+      status: Active
+
+    - no: 022
+      system_no: system_021
+      system_id: 2026021
+      system_code: OS_PROOPS
+      system_name: Omnex_System_ProjectOps
+      category_code: OS_OPS
+      schema: omnex_system_projectops
+      description: Executes government and enterprise project lifecycles, milestones, and budgets
+      status: Active
+
+    - no: 023
+      system_no: system_022
+      system_id: 2026022
+      system_code: OS_CLINOPS
+      system_name: Omnex_System_ClinicalOps
+      category_code: OS_OPS
+      schema: omnex_system_clinicalops
+      description: Executes clinical operations including patient flow, treatment, and facility operations
+      status: Active
+
+    - no: 024
+      system_no: system_023
+      system_id: 2026023
+      system_code: OS_EDOPS
+      system_name: Omnex_System_EduOps
+      category_code: OS_OPS
+      schema: omnex_system_eduops
+      description: Executes education operations including enrollment, staffing, and institutional management
+      status: Active
+
+    - no: 025
+      system_no: system_024
+      system_id: 2026024
+      system_code: OS_MR
+      system_name: Omnex_System_MasterRouter
+      category_code: OS_ORC
+      schema: omnex_system_masterrouter
+      description: Listens to sovereign system signals, learns patterns, and routes events across ERP rails
+      status: Active
+
+    - no: 026
+      system_no: system_025
+      system_id: 2026025
+      system_code: OS_ERP
+      system_name: Omnex_System_ErpRail
+      category_code: OS_ORC
+      schema: omnex_system_erprail
+      description: Provides deterministic orchestration rails connecting signals to operational systems
+      status: Active
+
+    - no: 027
+      system_no: system_026
+      system_id: 2026026
+      system_code: OS_INTEL
+      system_name: Omnex_System_Intelligence
+      category_code: OS_ORC
+      schema: omnex_system_intelligence
+      description: Performs AI-driven inference, prescription, learning, and signal intelligence auditing
+      status: Active
+
+    - no: 028
+      system_no: system_027
+      system_id: 2026027
+      system_code: OS_PROC
+      system_name: Omnex_System_Procurement
+      category_code: OS_ECOFAB
+      schema: omnex_system_procurement
+      description: Governs procurement lifecycles including sourcing, tendering, and awards
+      status: Active
+
+    - no: 029
+      system_no: system_028
+      system_id: 2026028
+      system_code: OS_PS
+      system_name: Omnex_System_ProductService
+      category_code: OS_ECOFAB
+      schema: omnex_system_productservice
+      description: Registers and validates authoritative products and services within the economy
+      status: Active
+
+    - no: 030
+      system_no: system_029
+      system_id: 2026029
+      system_code: OS_LOG
+      system_name: Omnex_System_Logistics
+      category_code: OS_ECOFAB
+      schema: omnex_system_logistics
+      description: Manages logistics, warehousing, transport, and supply chain traceability
+      status: Active
+
+    - no: 031
+      system_no: system_030
+      system_id: 2026030
+      system_code: OS_MFG
+      system_name: Omnex_System_Manufacturing
+      category_code: OS_ECOFAB
+      schema: omnex_system_manufacturing
+      description: Governs manufacturing plants, production lines, and industrial output
+      status: Active
+
+    - no: 032
+      system_no: system_031
+      system_id: 2026031
+      system_code: OS_LS
+      system_name: Omnex_System_Lifestyle
+      category_code: OS_ECOFAB
+      schema: omnex_system_lifestyle
+      description: Oversees lifestyle services, social wellbeing, and quality-of-life systems
+      status: Active
+
+    - no: 033
+      system_no: system_032
+      system_id: 2026032
+      system_code: OS_ICT
+      system_name: Omnex_System_ICT
+      category_code: OS_ECOFAB
+      schema: omnex_system_ict
+      description: National ICT backbone including connectivity, digital identity infra, and platforms
+      status: Active
+
+    - no: 034
+      system_no: system_033
+      system_id: 2026033
+      system_code: OS_ENV
+      system_name: Omnex_System_Environment
+      category_code: OS_ECOFAB
+      schema: omnex_system_environment
+      description: Environmental governance, climate monitoring, and compliance enforcement
+      status: Active
+
+    - no: 035
+      system_no: system_034
+      system_id: 2026034
+      system_code: OS_SPOLI
+      system_name: SmartPolitika
+      category_code: OS_STECH
+      schema: omnex_system_smartpolitika
+      description: Smart political engagement, policy signaling, and civic participation interfaces
+      status: Active
+
+    - no: 036
+      system_no: system_035
+      system_id: 2026035
+      system_code: OS_SPAY
+      system_name: SmartPay
+      category_code: OS_STECH
+      schema: omnex_system_smartpay
+      description: Unified digital payment gateway integrating public and private payment rails
+      status: Active
+
+    - no: 037
+      system_no: system_036
+      system_id: 2026036
+      system_code: OS_USHURU
+      system_name: SmartUshuru
+      category_code: OS_STECH
+      schema: omnex_system_smartushuru
+      description: Digital taxpayer interface enabling assessment, filing, and compliance
+      status: Active
+
+    - no: 038
+      system_no: system_037
+      system_id: 2026037
+      system_code: OS_SBIZ
+      system_name: SmartBiz
+      category_code: OS_STECH
+      schema: omnex_system_smartbiz
+      description: Business-facing operational gateway for licensing, compliance, and services
+      status: Active
+
+    - no: 039
+      system_no: system_038
+      system_id: 2026038
+      system_code: OS_SMNR
+      system_name: SmartManager
+      category_code: OS_STECH
+      schema: omnex_system_smartmanager
+      description: Executive dashboards, management intelligence, and system oversight tools
+      status: Active
+
+    - no: 040
+      system_no: system_039
+      system_id: 2026039
+      system_code: OS_SAGRI
+      system_name: SmartAgriculture
+      category_code: OS_STECH
+      schema: omnex_system_smartagriculture
+      description: Smart farming, IoT agriculture monitoring, and precision agritech systems
+      status: Active
+
+    - no: 041
+      system_no: system_040
+      system_id: 2026040
+      system_code: OS_SEN
+      system_name: SmartEnergies
+      category_code: OS_STECH
+      schema: omnex_system_smartenergies
+      description: Energy optimization, smart grids, and consumption intelligence systems
+      status: Active
+
+    - no: 042
+      system_no: system_041
+      system_id: 2026041
+      system_code: OS_STR
+      system_name: SmartTender
+      category_code: OS_STECH
+      schema: omnex_system_smarttender
+      description: Smart tendering, bidding intelligence, and transparent procurement interfaces
+      status: Active
+
+    - no: 043
+      system_no: system_042
+      system_id: 2026042
+      system_code: OS_SC
+      system_name: SmartClinic
+      category_code: OS_STECH
+      schema: omnex_system_smartclinic
+      description: Digital clinical systems for patient records, diagnostics, and care delivery
+      status: Active
+
+    - no: 044
+      system_no: system_043
+      system_id: 2026043
+      system_code: OS_SAC
+      system_name: SmartAcademia
+      category_code: OS_STECH
+      schema: omnex_system_smartacademia
+      description: Academic governance, examinations, credentials, and smart education ecosystems
+      status: Active
+

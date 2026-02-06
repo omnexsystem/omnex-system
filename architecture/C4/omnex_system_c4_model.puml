@@ -1,0 +1,71 @@
+@startuml OmnexSystem_C4_Context
+
+title Omnex System — C4 Context Model (Genesis 2026)
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' === PERSONS ===
+Person(admin, "System Engineer", "Installs, configures and governs Omnex Systems")
+Person(user, "Constitutional Operator", "Operates sovereign Omnex systems")
+
+' === SYSTEMS ===
+System_Boundary(OSB, "Omnex_System_Bootstrap") {
+    System(bootstrapEngine, "Bootstrap Engine", "Initializes schema,\nphases and extensions")
+}
+
+System_Boundary(OSCF, "Omnex_System_Core_Foundation") {
+    System(core, "System Core", "Registry,\nidentity,\ngovernance,\naudit enforcement")
+    System(identity, "System Identity", "Declares\nID,\nCODE,\nSCHEMA")
+    System(governance, "System Governance", "Enforces RLS,\nroles,\npolicies")
+    System(audit, "System Audit", "Audit sealing,\nmutation locks")
+    System(foundation, "Systems Foundation", "Category registry\n& shared contracts")
+}
+
+System_Boundary(AUTH, "Authority Systems") {
+    System(treasury, "Treasury System", "Budgeting authority")
+    System(tax, "Tax System", "Taxation management")
+    System(health, "Health System", "Healthcare system governance")
+}
+
+System_Boundary(OP, "Operational Systems") {
+    System(financeops, "FinanceOps", "Executes budgeting\nand payments")
+    System(tradeops, "TradeOps", "Executes trade flows")
+}
+
+System_Boundary(EF, "EconomicFabric Systems") {
+    System(procurement, "Procurement", "Executes\ncontract awards")
+    System(productservice, "ProductService", "Registers\nproducts/services")
+}
+
+System_Boundary(ORCH, "Omnex_System_Orchestration") {
+    System(masterrouter, "MasterRouter", "Routes system signals")
+    System(erprail, "ERP Rails", "Operational lane coordination")
+    System(intel, "Intelligence", "Inference,\nguidance,\naudit correlation")
+}
+
+System_Ext(database, "PostgreSQL Database", "Houses all schemas,\nmigrations,\npolicies,\nevents")
+
+' === RELATIONSHIPS ===
+admin -> bootstrapEngine : installs + initializes
+bootstrapEngine -> core : installs registry
+
+core -> database : governs schema
+identity -> database : declares schema + code
+governance -> database : enforces policy
+audit -> database : stores audit_hash, state
+
+user -> masterrouter : emits signal
+masterrouter -> erprail : routes operations
+erprail -> intel : submits trace
+intel -> treasury : signals authority
+intel -> tax : signals authority
+intel -> financeops : signals execution
+intel -> procurement : signals contract state
+
+treasury -> audit : logs event
+tax -> audit : logs event
+financeops -> audit : logs state
+procurement -> audit : logs event
+productservice -> audit : logs verification
+
+@enduml

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Omnex System Event Specification",
+  "description": "Schema definition for all event emissions within sovereign Omnex systems.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier"
+    },
+    "emitter_system_code": {
+      "type": "string",
+      "description": "Code of the system that emitted the event"
+    },
+    "emitter_engine_id": {
+      "type": "integer",
+      "description": "Internal engine identifier"
+    },
+    "event_code": {
+      "type": "string",
+      "description": "Standardized event code"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["state_change", "external_call", "system_trigger", "error"],
+      "description": "Nature of event"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Payload of the event",
+      "additionalProperties": true
+    },
+    "emitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of emission"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "Origin tenant or jurisdiction"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "warning", "critical"],
+      "description": "Signal severity level"
+    }
+  },
+  "required": ["event_id", "emitter_system_code", "event_code", "event_type", "emitted_at"]
+}
