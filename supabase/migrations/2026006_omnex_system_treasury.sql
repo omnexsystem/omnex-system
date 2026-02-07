@@ -1420,8 +1420,6 @@ SET search_path = omnex_system_treasury, public;
 -- ==========================
 -- PHASE 3: TABLES
 -- ==========================
-
--- 3.1 Treasury Budget Classification Authority
 CREATE TABLE IF NOT EXISTS omnex_system_treasury.treasury_classification_code (
     class_code_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -1441,53 +1439,57 @@ CREATE TABLE IF NOT EXISTS omnex_system_treasury.treasury_classification_code (
 );
 
 COMMENT ON TABLE omnex_system_treasury.treasury_classification_code IS
-'Authoritative registry of treasury budget classification codes and hierarchical structures';
+'Authoritative registry of treasury budget classification codes and hierarchies';
 
 -- ==========================
 -- PHASE 4: CONSTRAINTS
 -- ==========================
 
--- Effective date sanity
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    DROP CONSTRAINT IF EXISTS chk_classification_effective_range;
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_classification_effective_range'
+    ) THEN
+        ALTER TABLE omnex_system_treasury.treasury_classification_code
+            ADD CONSTRAINT chk_classification_effective_range
+            CHECK (effective_to IS NULL OR effective_to > effective_from);
+    END IF;
+END $$;
 
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    ADD CONSTRAINT chk_classification_effective_range
-    CHECK (
-        effective_to IS NULL
-        OR effective_to > effective_from
-    );
-
--- Prevent self-parenting
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    DROP CONSTRAINT IF EXISTS chk_no_self_parent;
-
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    ADD CONSTRAINT chk_no_self_parent
-    CHECK (
-        parent_code_id IS NULL
-        OR parent_code_id <> class_code_id
-    );
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_no_self_parent'
+    ) THEN
+        ALTER TABLE omnex_system_treasury.treasury_classification_code
+            ADD CONSTRAINT chk_no_self_parent
+            CHECK (parent_code_id IS NULL OR parent_code_id <> class_code_id);
+    END IF;
+END $$;
 
 -- ==========================
 -- PHASE 5: RELATIONSHIPS
 -- ==========================
 
--- Hierarchical self-referencing relationship (SAFE & RERUNNABLE)
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    DROP CONSTRAINT IF EXISTS fk_parent_classification;
-
-ALTER TABLE omnex_system_treasury.treasury_classification_code
-    ADD CONSTRAINT fk_parent_classification
-    FOREIGN KEY (parent_code_id)
-    REFERENCES omnex_system_treasury.treasury_classification_code (class_code_id)
-    DEFERRABLE INITIALLY DEFERRED;
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'fk_parent_classification'
+          AND conrelid = 'omnex_system_treasury.treasury_classification_code'::regclass
+    ) THEN
+        ALTER TABLE omnex_system_treasury.treasury_classification_code
+            ADD CONSTRAINT fk_parent_classification
+            FOREIGN KEY (parent_code_id)
+            REFERENCES omnex_system_treasasury.treasury_classification_code (class_code_id)
+            DEFERRABLE INITIALLY DEFERRED;
+    END IF;
+END $$;
 
 -- ==========================
 -- PHASE 6: LOGIC / TRIGGERS
 -- ==========================
 
--- Enforce immutability (append-only authority truth)
 CREATE OR REPLACE FUNCTION omnex_system_treasury.prevent_classification_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -1499,7 +1501,7 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS trg_prevent_classification_mutation
-ON omnex_system_treasasury.treasury_classification_code;
+ON omnex_system_treasury.treasury_classification_code;
 
 CREATE TRIGGER trg_prevent_classification_mutation
 BEFORE UPDATE OR DELETE
@@ -1520,11 +1522,6 @@ CREATE POLICY deny_all_treasury_classification
 ON omnex_system_treasury.treasury_classification_code
 FOR ALL
 USING (false);
-
-COMMENT ON POLICY deny_all_treasury_classification
-ON omnex_system_treasury.treasury_classification_code IS
-'All access to treasury classification codes is centrally governed. No direct reads or writes.';
-
 -- ==========================
 -- PHASE 8: INDEXES
 -- ==========================
