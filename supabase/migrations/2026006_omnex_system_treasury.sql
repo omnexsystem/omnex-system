@@ -1425,7 +1425,7 @@ SET search_path = omnex_system_treasury, public;
 CREATE TABLE IF NOT EXISTS omnex_system_treasury.treasury_classification_code (
     class_code_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    class_type TEXT NOT NULL,              -- VOTE / PROGRAM / ECONOMIC / ADMIN
+    class_type TEXT NOT NULL,          -- VOTE / PROGRAM / ECONOMIC / ADMIN
     class_code TEXT NOT NULL UNIQUE,
     class_name TEXT NOT NULL,
 
@@ -1441,44 +1441,42 @@ CREATE TABLE IF NOT EXISTS omnex_system_treasury.treasury_classification_code (
 );
 
 COMMENT ON TABLE omnex_system_treasury.treasury_classification_code IS
-'Authoritative registry of treasury budget classification codes and hierarchies';
+'Authoritative registry of treasury budget classification codes and hierarchical structures';
 
 -- ==========================
 -- PHASE 4: CONSTRAINTS
 -- ==========================
 
 -- Effective date sanity
-DO $$ BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'chk_classification_effective_range'
-    ) THEN
-        ALTER TABLE omnex_system_treasury.treasury_classification_code
-            ADD CONSTRAINT chk_classification_effective_range
-            CHECK (
-                effective_to IS NULL
-                OR effective_to > effective_from
-            );
-    END IF;
-END $$;
+ALTER TABLE omnex_system_treasury.treasury_classification_code
+    DROP CONSTRAINT IF EXISTS chk_classification_effective_range;
 
--- Parent must not self-reference
-DO $$ BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'chk_no_self_parent'
-    ) THEN
-        ALTER TABLE omnex_system_treasury.treasury_classification_code
-            ADD CONSTRAINT chk_no_self_parent
-            CHECK (parent_code_id IS NULL OR parent_code_id <> class_code_id);
-    END IF;
-END $$;
+ALTER TABLE omnex_system_treasury.treasury_classification_code
+    ADD CONSTRAINT chk_classification_effective_range
+    CHECK (
+        effective_to IS NULL
+        OR effective_to > effective_from
+    );
+
+-- Prevent self-parenting
+ALTER TABLE omnex_system_treasury.treasury_classification_code
+    DROP CONSTRAINT IF EXISTS chk_no_self_parent;
+
+ALTER TABLE omnex_system_treasury.treasury_classification_code
+    ADD CONSTRAINT chk_no_self_parent
+    CHECK (
+        parent_code_id IS NULL
+        OR parent_code_id <> class_code_id
+    );
 
 -- ==========================
 -- PHASE 5: RELATIONSHIPS
 -- ==========================
 
--- Hierarchical relationship (self-referencing)
+-- Hierarchical self-referencing relationship (SAFE & RERUNNABLE)
+ALTER TABLE omnex_system_treasury.treasury_classification_code
+    DROP CONSTRAINT IF EXISTS fk_parent_classification;
+
 ALTER TABLE omnex_system_treasury.treasury_classification_code
     ADD CONSTRAINT fk_parent_classification
     FOREIGN KEY (parent_code_id)
@@ -1489,7 +1487,7 @@ ALTER TABLE omnex_system_treasury.treasury_classification_code
 -- PHASE 6: LOGIC / TRIGGERS
 -- ==========================
 
--- Enforce immutability (append-only classification truth)
+-- Enforce immutability (append-only authority truth)
 CREATE OR REPLACE FUNCTION omnex_system_treasury.prevent_classification_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -1501,7 +1499,7 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS trg_prevent_classification_mutation
-ON omnex_system_treasury.treasury_classification_code;
+ON omnex_system_treasasury.treasury_classification_code;
 
 CREATE TRIGGER trg_prevent_classification_mutation
 BEFORE UPDATE OR DELETE
@@ -1547,6 +1545,7 @@ COMMIT;
 -- ============================================================
 -- END OF ENGINE 007 — OMNEX SYSTEM TREASURY
 -- ============================================================
+
 -- ============================================================
 -- OMNEX SYSTEM TREASURY — ENGINE 008
 -- FINAL SAFE, RERUNNABLE MIGRATION (CANONICAL)
